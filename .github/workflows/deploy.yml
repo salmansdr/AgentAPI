@@ -1,0 +1,164 @@
+name: Deploy services
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: Deployment environment
+        required: true
+        default: development
+        type: choice
+        options:
+          - development
+          - production
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: services-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  validate:
+    name: Validate services
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install service dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r services/customer-function/requirements.txt
+          python -m pip install -r services/order-api/requirements.txt
+
+      - name: Validate OpenAPI documents and Python services
+        run: |
+          python -m json.tool services/customer-function/openapi.json > /dev/null
+          python -m json.tool services/order-api/openapi.json > /dev/null
+          python -m py_compile services/customer-function/function_app.py
+          python -m py_compile services/order-api/order_service.py
+
+  deploy-development:
+    name: Deploy development
+    needs: validate
+    if: github.event_name == 'push' || inputs.target_environment == 'development'
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Sign in to Azure with OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy customer Function App
+        run: |
+          cd services/customer-function
+          zip -r ../../customer-function.zip . -x local.settings.json '__pycache__/*'
+          az functionapp deployment source config-zip \
+            --resource-group "${{ vars.FUNCTION_RESOURCE_GROUP }}" \
+            --name "${{ vars.FUNCTION_APP_NAME }}" \
+            --src ../../customer-function.zip \
+            --build-remote true
+
+      - name: Build and push Order API image
+        id: order_image
+        run: |
+          az acr login --name "${{ vars.ACR_NAME }}"
+          image="${{ vars.ACR_LOGIN_SERVER }}/order-api:${{ github.sha }}"
+          docker build --tag "$image" services/order-api
+          docker push "$image"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+
+      - name: Update Order API Container App
+        run: |
+          az containerapp update \
+            --resource-group "${{ vars.CONTAINER_APP_RESOURCE_GROUP }}" \
+            --name "${{ vars.CONTAINER_APP_NAME }}" \
+            --image "${{ steps.order_image.outputs.image }}"
+
+      - name: Smoke test deployed services
+        run: |
+          function_host=$(az functionapp show \
+            --resource-group "${{ vars.FUNCTION_RESOURCE_GROUP }}" \
+            --name "${{ vars.FUNCTION_APP_NAME }}" \
+            --query defaultHostName --output tsv)
+          container_host=$(az containerapp show \
+            --resource-group "${{ vars.CONTAINER_APP_RESOURCE_GROUP }}" \
+            --name "${{ vars.CONTAINER_APP_NAME }}" \
+            --query properties.configuration.ingress.fqdn --output tsv)
+          curl --fail --retry 6 --retry-delay 10 "https://${function_host}/api/customers"
+          curl --fail --retry 6 --retry-delay 10 "https://${container_host}/health"
+
+  deploy-production:
+    name: Deploy production
+    needs: validate
+    if: github.event_name == 'workflow_dispatch' && inputs.target_environment == 'production'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Sign in to Azure with OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy customer Function App
+        run: |
+          cd services/customer-function
+          zip -r ../../customer-function.zip . -x local.settings.json '__pycache__/*'
+          az functionapp deployment source config-zip \
+            --resource-group "${{ vars.FUNCTION_RESOURCE_GROUP }}" \
+            --name "${{ vars.FUNCTION_APP_NAME }}" \
+            --src ../../customer-function.zip \
+            --build-remote true
+
+      - name: Build and push Order API image
+        id: order_image
+        run: |
+          az acr login --name "${{ vars.ACR_NAME }}"
+          image="${{ vars.ACR_LOGIN_SERVER }}/order-api:${{ github.sha }}"
+          docker build --tag "$image" services/order-api
+          docker push "$image"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+
+      - name: Update Order API Container App
+        run: |
+          az containerapp update \
+            --resource-group "${{ vars.CONTAINER_APP_RESOURCE_GROUP }}" \
+            --name "${{ vars.CONTAINER_APP_NAME }}" \
+            --image "${{ steps.order_image.outputs.image }}"
+
+      - name: Smoke test deployed services
+        run: |
+          function_host=$(az functionapp show \
+            --resource-group "${{ vars.FUNCTION_RESOURCE_GROUP }}" \
+            --name "${{ vars.FUNCTION_APP_NAME }}" \
+            --query defaultHostName --output tsv)
+          container_host=$(az containerapp show \
+            --resource-group "${{ vars.CONTAINER_APP_RESOURCE_GROUP }}" \
+            --name "${{ vars.CONTAINER_APP_NAME }}" \
+            --query properties.configuration.ingress.fqdn --output tsv)
+          curl --fail --retry 6 --retry-delay 10 "https://${function_host}/api/customers"
+          curl --fail --retry 6 --retry-delay 10 "https://${container_host}/health"

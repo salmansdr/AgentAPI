@@ -1,0 +1,151 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Order Service API",
+    "version": "0.1.0",
+    "description": "Order details and customer order lookup endpoints."
+  },
+  "servers": [
+    {
+      "url": "https://{orderServiceHost}",
+      "variables": {
+        "orderServiceHost": {
+          "default": "localhost:8001",
+          "description": "Order service host without a protocol or path."
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Get service health",
+        "responses": {
+          "200": {
+            "description": "Service health"
+          }
+        }
+      }
+    },
+    "/orders": {
+      "get": {
+        "operationId": "getOrders",
+        "summary": "Get all orders",
+        "responses": {
+          "200": {
+            "description": "Order collection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Order"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{order_id}": {
+      "get": {
+        "operationId": "getOrderById",
+        "summary": "Get an order by identifier",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "order-1001"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Order not found"
+          }
+        }
+      }
+    },
+    "/customers/{customer_id}/orders": {
+      "get": {
+        "operationId": "getCustomerOrders",
+        "summary": "Get all orders for a customer",
+        "parameters": [
+          {
+            "name": "customer_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "cust-001"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer order collection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Order"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Order": {
+        "type": "object",
+        "required": ["orderId", "customerId", "status", "total", "items"],
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "example": "order-1001"
+          },
+          "customerId": {
+            "type": "string",
+            "example": "cust-001"
+          },
+          "status": {
+            "type": "string",
+            "example": "shipped"
+          },
+          "total": {
+            "type": "number",
+            "format": "double",
+            "example": 129.99
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": ["wireless keyboard", "mouse"]
+          }
+        }
+      }
+    }
+  }
+}

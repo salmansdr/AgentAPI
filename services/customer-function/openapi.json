@@ -1,0 +1,117 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Customer API",
+    "version": "1.0.0",
+    "description": "Customer lookup endpoints exposed by the Azure Function App."
+  },
+  "servers": [
+    {
+      "url": "https://{functionAppHost}/api",
+      "variables": {
+        "functionAppHost": {
+          "default": "localhost:7071",
+          "description": "Azure Function App host without a protocol or path."
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/customers": {
+      "get": {
+        "operationId": "getCustomers",
+        "summary": "Get all customers",
+        "responses": {
+          "200": {
+            "description": "Customer collection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["customers"],
+                  "properties": {
+                    "customers": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Customer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customer_id}": {
+      "get": {
+        "operationId": "getCustomerById",
+        "summary": "Get a customer by identifier",
+        "parameters": [
+          {
+            "name": "customer_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "cust-001"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["customerDetails"],
+                  "properties": {
+                    "customerDetails": {
+                      "$ref": "#/components/schemas/Customer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Customer not found"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Customer": {
+        "type": "object",
+        "required": ["customerId", "name", "email", "phone", "status"],
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "example": "cust-001"
+          },
+          "name": {
+            "type": "string",
+            "example": "Ava Patel"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "ava.patel@example.com"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+1-555-0101"
+          },
+          "status": {
+            "type": "string",
+            "example": "active"
+          }
+        }
+      }
+    }
+  }
+}

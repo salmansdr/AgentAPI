@@ -92,8 +92,12 @@ jobs:
           az webapp config container set \
             --resource-group "${{ vars.ORDER_WEB_APP_RESOURCE_GROUP }}" \
             --name "${{ vars.ORDER_WEB_APP_NAME }}" \
-            --docker-custom-image-name "${{ steps.order_image.outputs.image }}" \
-            --docker-registry-server-url "https://${{ vars.ACR_LOGIN_SERVER }}"
+            --container-image-name "${{ steps.order_image.outputs.image }}" \
+            --container-registry-url "https://${{ vars.ACR_LOGIN_SERVER }}"
+          az webapp config set \
+            --resource-group "${{ vars.ORDER_WEB_APP_RESOURCE_GROUP }}" \
+            --name "${{ vars.ORDER_WEB_APP_NAME }}" \
+            --generic-configurations '{"acrUseManagedIdentityCreds": true}'
           az webapp restart \
             --resource-group "${{ vars.ORDER_WEB_APP_RESOURCE_GROUP }}" \
             --name "${{ vars.ORDER_WEB_APP_NAME }}"
@@ -156,8 +160,12 @@ jobs:
           az webapp config container set \
             --resource-group "${{ vars.ORDER_WEB_APP_RESOURCE_GROUP }}" \
             --name "${{ vars.ORDER_WEB_APP_NAME }}" \
-            --docker-custom-image-name "${{ steps.order_image.outputs.image }}" \
-            --docker-registry-server-url "https://${{ vars.ACR_LOGIN_SERVER }}"
+            --container-image-name "${{ steps.order_image.outputs.image }}" \
+            --container-registry-url "https://${{ vars.ACR_LOGIN_SERVER }}"
+          az webapp config set \
+            --resource-group "${{ vars.ORDER_WEB_APP_RESOURCE_GROUP }}" \
+            --name "${{ vars.ORDER_WEB_APP_NAME }}" \
+            --generic-configurations '{"acrUseManagedIdentityCreds": true}'
           az webapp restart \
             --resource-group "${{ vars.ORDER_WEB_APP_RESOURCE_GROUP }}" \
             --name "${{ vars.ORDER_WEB_APP_NAME }}"

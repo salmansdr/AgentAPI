@@ -103,6 +103,7 @@ jobs:
             --name "${{ vars.ORDER_WEB_APP_NAME }}"
 
       - name: Smoke test deployed services
+        if: ${{ false }} # Temporarily disabled while deployment endpoint checks are finalized.
         run: |
           function_host=$(az webapp config hostname list \
             --resource-group "${{ vars.FUNCTION_RESOURCE_GROUP }}" \

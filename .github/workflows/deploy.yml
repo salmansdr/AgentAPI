@@ -87,29 +87,33 @@ jobs:
           docker push "$image"
           echo "image=$image" >> "$GITHUB_OUTPUT"
 
-      - name: Update Order API Container App
+      - name: Update Order API Web App
         run: |
-          az containerapp update \
-            --resource-group "${{ vars.CONTAINER_APP_RESOURCE_GROUP }}" \
-            --name "${{ vars.CONTAINER_APP_NAME }}" \
-            --image "${{ steps.order_image.outputs.image }}"
+          az webapp config container set \
+            --resource-group "${{ vars.ORDER_WEB_APP_RESOURCE_GROUP }}" \
+            --name "${{ vars.ORDER_WEB_APP_NAME }}" \
+            --docker-custom-image-name "${{ steps.order_image.outputs.image }}" \
+            --docker-registry-server-url "https://${{ vars.ACR_LOGIN_SERVER }}"
+          az webapp restart \
+            --resource-group "${{ vars.ORDER_WEB_APP_RESOURCE_GROUP }}" \
+            --name "${{ vars.ORDER_WEB_APP_NAME }}"
 
       - name: Smoke test deployed services
         run: |
-          function_host=$(az functionapp hostname list \
+          function_host=$(az webapp config hostname list \
             --resource-group "${{ vars.FUNCTION_RESOURCE_GROUP }}" \
             --name "${{ vars.FUNCTION_APP_NAME }}" \
             --query "[?contains(name, 'azurewebsites.net')].name | [0]" --output tsv)
-          container_host=$(az containerapp show \
-            --resource-group "${{ vars.CONTAINER_APP_RESOURCE_GROUP }}" \
-            --name "${{ vars.CONTAINER_APP_NAME }}" \
-            --query properties.configuration.ingress.fqdn --output tsv)
+          order_host=$(az webapp show \
+            --resource-group "${{ vars.ORDER_WEB_APP_RESOURCE_GROUP }}" \
+            --name "${{ vars.ORDER_WEB_APP_NAME }}" \
+            --query defaultHostName --output tsv)
           test -n "$function_host" || { echo "No Azure Functions hostname was found."; exit 1; }
-          test -n "$container_host" || { echo "No Container Apps ingress hostname was found."; exit 1; }
+          test -n "$order_host" || { echo "No Order API Web App hostname was found."; exit 1; }
           echo "Testing Function App host: $function_host"
-          echo "Testing Container App host: $container_host"
+          echo "Testing Order API Web App host: $order_host"
           curl --fail --retry 6 --retry-delay 10 "https://${function_host}/api/customers"
-          curl --fail --retry 6 --retry-delay 10 "https://${container_host}/health"
+          curl --fail --retry 6 --retry-delay 10 "https://${order_host}/health"
 
   deploy-production:
     name: Deploy production
@@ -147,26 +151,30 @@ jobs:
           docker push "$image"
           echo "image=$image" >> "$GITHUB_OUTPUT"
 
-      - name: Update Order API Container App
+      - name: Update Order API Web App
         run: |
-          az containerapp update \
-            --resource-group "${{ vars.CONTAINER_APP_RESOURCE_GROUP }}" \
-            --name "${{ vars.CONTAINER_APP_NAME }}" \
-            --image "${{ steps.order_image.outputs.image }}"
+          az webapp config container set \
+            --resource-group "${{ vars.ORDER_WEB_APP_RESOURCE_GROUP }}" \
+            --name "${{ vars.ORDER_WEB_APP_NAME }}" \
+            --docker-custom-image-name "${{ steps.order_image.outputs.image }}" \
+            --docker-registry-server-url "https://${{ vars.ACR_LOGIN_SERVER }}"
+          az webapp restart \
+            --resource-group "${{ vars.ORDER_WEB_APP_RESOURCE_GROUP }}" \
+            --name "${{ vars.ORDER_WEB_APP_NAME }}"
 
       - name: Smoke test deployed services
         run: |
-          function_host=$(az functionapp hostname list \
+          function_host=$(az webapp config hostname list \
             --resource-group "${{ vars.FUNCTION_RESOURCE_GROUP }}" \
             --name "${{ vars.FUNCTION_APP_NAME }}" \
             --query "[?contains(name, 'azurewebsites.net')].name | [0]" --output tsv)
-          container_host=$(az containerapp show \
-            --resource-group "${{ vars.CONTAINER_APP_RESOURCE_GROUP }}" \
-            --name "${{ vars.CONTAINER_APP_NAME }}" \
-            --query properties.configuration.ingress.fqdn --output tsv)
+          order_host=$(az webapp show \
+            --resource-group "${{ vars.ORDER_WEB_APP_RESOURCE_GROUP }}" \
+            --name "${{ vars.ORDER_WEB_APP_NAME }}" \
+            --query defaultHostName --output tsv)
           test -n "$function_host" || { echo "No Azure Functions hostname was found."; exit 1; }
-          test -n "$container_host" || { echo "No Container Apps ingress hostname was found."; exit 1; }
+          test -n "$order_host" || { echo "No Order API Web App hostname was found."; exit 1; }
           echo "Testing Function App host: $function_host"
-          echo "Testing Container App host: $container_host"
+          echo "Testing Order API Web App host: $order_host"
           curl --fail --retry 6 --retry-delay 10 "https://${function_host}/api/customers"
-          curl --fail --retry 6 --retry-delay 10 "https://${container_host}/health"
+          curl --fail --retry 6 --retry-delay 10 "https://${order_host}/health"

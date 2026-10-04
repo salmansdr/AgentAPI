@@ -1,0 +1,59 @@
+name: Provision production infrastructure
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  provision-production:
+    name: Provision production
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Sign in to Azure with OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Create production resource group
+        run: |
+          az group create \
+            --name "${{ vars.INFRA_RESOURCE_GROUP }}" \
+            --location "${{ vars.AZURE_LOCATION }}"
+
+      - name: Preview infrastructure changes
+        run: |
+          az deployment group what-if \
+            --resource-group "${{ vars.INFRA_RESOURCE_GROUP }}" \
+            --template-file infra/main.bicep \
+            --parameters \
+              location="${{ vars.AZURE_LOCATION }}" \
+              functionAppName="${{ vars.FUNCTION_APP_NAME }}" \
+              orderWebAppName="${{ vars.ORDER_WEB_APP_NAME }}" \
+              acrName="${{ vars.ACR_NAME }}" \
+              storageAccountName="${{ vars.FUNCTION_STORAGE_ACCOUNT_NAME }}" \
+              orderAppServicePlanName="${{ vars.ORDER_APP_SERVICE_PLAN_NAME }}" \
+              tags='{"environment":"production","application":"agent-api"}'
+
+      - name: Deploy infrastructure
+        run: |
+          az deployment group create \
+            --name "agent-api-${{ github.run_id }}" \
+            --resource-group "${{ vars.INFRA_RESOURCE_GROUP }}" \
+            --template-file infra/main.bicep \
+            --parameters \
+              location="${{ vars.AZURE_LOCATION }}" \
+              functionAppName="${{ vars.FUNCTION_APP_NAME }}" \
+              orderWebAppName="${{ vars.ORDER_WEB_APP_NAME }}" \
+              acrName="${{ vars.ACR_NAME }}" \
+              storageAccountName="${{ vars.FUNCTION_STORAGE_ACCOUNT_NAME }}" \
+              orderAppServicePlanName="${{ vars.ORDER_APP_SERVICE_PLAN_NAME }}" \
+              tags='{"environment":"production","application":"agent-api"}'

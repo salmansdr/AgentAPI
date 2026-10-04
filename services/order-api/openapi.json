@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://{orderServiceHost}",
+      "url": "https://order-api-dev-gjahcaagc0dqb9hx.westus3-01.azurewebsites.net",
       "variables": {
         "orderServiceHost": {
           "default": "localhost:8001",

@@ -19,13 +19,17 @@ ORDER_DETAILS = [
         "total": 79.50,
         "items": ["usb-c dock"],
     },
+    {
+        "orderId": "order-1003",
+        "customerId": "cust-003",
+        "status": "processing",
+        "total": 89.50,
+        "items": ["usb-c dock"],
+     },
 ]
 
 
-@app.get("/health")
-def health_check() -> dict[str, str]:
-    """Report Order Service availability."""
-    return {"status": "ok"}
+
 
 
 @app.get("/orders")

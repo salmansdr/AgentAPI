@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://{functionAppHost}/api",
+      "url": "https://customer-api-dev-bjdmhja6bxftexhd.westus-01.azurewebsites.net/api",
       "variables": {
         "functionAppHost": {
           "default": "localhost:7071",

@@ -26,6 +26,13 @@ ORDER_DETAILS = [
         "total": 89.50,
         "items": ["usb-c dock"],
      },
+      {
+             "orderId": "order-1004",
+             "customerId": "cust-004",
+             "status": "processing",
+             "total": 99.50,
+             "items": ["wireless keyboard","usb-c dock"],
+          },
 ]
 
 

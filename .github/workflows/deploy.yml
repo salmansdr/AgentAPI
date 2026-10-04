@@ -2,7 +2,7 @@ name: Deploy services
 
 on:
   push:
-    branches: [main]
+   # branches: [main]
   workflow_dispatch:
     inputs:
       target_environment:

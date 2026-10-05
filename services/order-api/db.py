@@ -1,11 +1,11 @@
 # db.py
-import pyodbc
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
 def get_db_connection():
+    import pyodbc  # lazy: app must start without ODBC libs when USE_DATABASE=False
     conn_str = (
         f"Driver={{{os.getenv('DB_DRIVER')}}};"
         f"Server={os.getenv('DB_SERVER')};"

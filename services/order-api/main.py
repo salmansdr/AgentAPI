@@ -3,6 +3,10 @@ import customer_service, product_service, order_service,project_estimation
 
 app = FastAPI(title="Ecommerce API", version="1.0.0")
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
 @app.get("/customers")
 def get_customers():
     return customer_service.get_all_customers()

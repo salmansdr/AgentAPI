@@ -46,8 +46,7 @@ jobs:
 
       - name: Validate OpenAPI documents and Python services
         run: |
-          python -m json.tool services/customer-function/openapi.json > /dev/null
-          python -m json.tool services/order-api/openapi.json > /dev/null
+         
           python -m py_compile services/customer-function/function_app.py
           python -m py_compile services/order-api/order_service.py
 

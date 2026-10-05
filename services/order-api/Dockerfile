@@ -10,6 +10,7 @@ COPY order_service.py .
 COPY customer_service.py .
 COPY product_service.py .
 COPY project_estimation.py .
+COPY .env .
 
 EXPOSE 8000
 

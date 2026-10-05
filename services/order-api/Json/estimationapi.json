@@ -1,0 +1,105 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Order Service API",
+    "version": "0.1.0",
+    "description": "Order details and project estimation endpoints."
+  },
+  "servers": [
+    {
+      "url": "https://order-api-dev-gjahcaagc0dqb9hx.westus3-01.azurewebsites.net",
+      "variables": {
+        "orderServiceHost": {
+          "default": "localhost:8001",
+          "description": "Order service host without a protocol or path."
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/projectEstimation": {
+      "get": {
+        "operationId": "getProjectEstimation",
+        "summary": "Get project estimation details",
+        "responses": {
+          "200": {
+            "description": "Project estimation response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectEstimation"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ProjectEstimation": {
+        "type": "object",
+        "properties": {
+          "estimationId": { "type": "string", "example": "694054e0744839a713fb0f0d" },
+          "estimationRef": { "type": "string", "example": "EST-1" },
+          "companyDetails": {
+            "type": "object",
+            "properties": {
+              "companyName": { "type": "string", "example": "BuildPro Construction Ltd" },
+              "address": { "type": "string", "example": "123 Construction Avenue, Kolkata" },
+              "currency": { "type": "string", "example": "Rs" }
+            }
+          },
+          "projectDetails": {
+            "type": "object",
+            "properties": {
+              "projectName": { "type": "string", "example": "Sunrise Residency" },
+              "location": { "type": "string", "example": "Plot#9, Beliaghata,Kolkata-700102" },
+              "projectType": { "type": "string", "example": "G+2 storied Residential Building" },
+              "constructionArea": { "type": "number", "example": 2200 }
+            }
+          },
+          "floorWiseCosts": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/FloorCost" }
+          },
+          "categoryWiseCosts": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CategoryCost" }
+          },
+          "totalExpenseAmount": { "type": "number", "example": 621895.25 },
+          "totalProjectCost": { "type": "number", "example": 4324994.13 }
+        }
+      },
+      "FloorCost": {
+        "type": "object",
+        "properties": {
+          "floorName": { "type": "string", "example": "Foundation" },
+          "componentName": { "type": "string", "example": "Earth Excavation" },
+          "category": { "type": "string", "example": "Earthwork" },
+          "totalQuantity": { "type": "number", "example": 52 },
+          "unit": { "type": "string", "example": "cum" },
+          "materialCost": { "type": "number", "example": 8996.72 },
+          "labourCost": { "type": "number", "example": 7280 },
+          "totalCost": { "type": "number", "example": 11413.65 },
+          "percentileCost": { "type": "number", "example": 0.26 },
+          "otherExpense": { "type": "number", "example": 1616.93 },
+          "costPerSft": { "type": "number", "example": 5.19 }
+        }
+      },
+      "CategoryCost": {
+        "type": "object",
+        "properties": {
+          "category": { "type": "string", "example": "Civil" },
+          "materialCost": { "type": "number", "example": 3320388.73 },
+          "labourCost": { "type": "number", "example": 165572.75 },
+          "otherExpense": { "type": "number", "example": 585514.36 },
+          "totalCost": { "type": "number", "example": 4071475.84 },
+          "costPerSft": { "type": "number", "example": 1850.67 },
+          "percentileCost": { "type": "number", "example": 94.14 }
+        }
+      }
+    }
+  }
+}

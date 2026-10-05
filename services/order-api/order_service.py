@@ -1,62 +1,47 @@
-"""FastAPI Order Service for order details and customer order lookups."""
+import os
+from db import get_db_connection
 
-from fastapi import FastAPI, HTTPException
+USE_DATABASE = os.getenv("USE_DATABASE", "False").lower() == "true"
 
-app = FastAPI(title="Order Service", version="0.1.0")
-
-ORDER_DETAILS = [
-    {
-        "orderId": "order-1001",
-        "customerId": "cust-001",
-        "status": "shipped",
-        "total": 129.99,
-        "items": ["wireless keyboard", "mouse"],
-    },
-    {
-        "orderId": "order-1002",
-        "customerId": "cust-002",
-        "status": "processing",
-        "total": 79.50,
-        "items": ["usb-c dock"],
-    },
-    {
-        "orderId": "order-1003",
-        "customerId": "cust-003",
-        "status": "processing",
-        "total": 89.50,
-        "items": ["usb-c dock"],
-     },
-      {
-             "orderId": "order-1004",
-             "customerId": "cust-004",
-             "status": "processing",
-             "total": 99.50,
-             "items": ["wireless keyboard","usb-c dock"],
-          },
+STATIC_ORDERS = [
+    {"orderId": 1001, "customerId": 1, "status": "shipped", "total": 129.99, "items": ["Wireless Keyboard"]},
+    {"orderId": 1002, "customerId": 2, "status": "processing", "total": 79.50, "items": ["USB-C Dock"]},
+    {"orderId": 1003, "customerId": 3, "status": "processing", "total": 25.00, "items": ["Mouse"]},
 ]
 
+def get_orders(customer_id=None, order_id=None):
+    if not USE_DATABASE:
+        if order_id:
+            return [o for o in STATIC_ORDERS if o["orderId"] == order_id]
+        if customer_id:
+            return [o for o in STATIC_ORDERS if o["customerId"] == customer_id]
+        return STATIC_ORDERS
 
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if customer_id:
+        cursor.execute("EXEC GetCustomerOrderDetails @CustomerID = ?", customer_id)
+    elif order_id:
+        cursor.execute("EXEC GetCustomerOrderDetails @OrderID = ?", order_id)
+    else:
+        cursor.execute("EXEC GetCustomerOrderDetails")
 
-
-
-@app.get("/orders")
-def get_order_details() -> list[dict[str, object]]:
-    """Return all order details."""
-    return ORDER_DETAILS
-
-
-@app.get("/orders/{order_id}")
-def get_order(order_id: str) -> dict[str, object]:
-    """Return one order by order identifier."""
-    for order in ORDER_DETAILS:
-        if order["orderId"] == order_id:
-            return order
-    raise HTTPException(status_code=404, detail="Order not found")
-
-
-@app.get("/customers/{customer_id}/orders")
-def get_customer_orders(customer_id: str) -> list[dict[str, object]]:
-    """Return all orders for a specific customer."""
+    rows = cursor.fetchall()
     return [
-        order for order in ORDER_DETAILS if order["customerId"] == customer_id
+        {
+            "orderId": row.OrderID,
+            "customerId": row.CustomerID,
+            "status": row.Status,
+            "total": float(row.Total),
+            "items": [row.ProductName],
+            "customerName": f"{row.FirstName} {row.LastName}",
+            "email": row.Email,
+            "phone": row.Phone,
+            "address": row.Address,
+            "productId": row.ProductID,
+            "productDescription": row.ProductDescription,
+            "price": float(row.Price),
+            "orderDate": str(row.OrderDate),
+        }
+        for row in rows
     ]

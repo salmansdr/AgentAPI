@@ -1,2 +1,5 @@
 fastapi
 uvicorn[standard]
+requests
+pyodbc
+python-dotenv   # optional, if you want to load DB connection from .env file

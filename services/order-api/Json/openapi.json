@@ -1,9 +1,9 @@
 {
-  "openapi": "3.0.3",
+  "openapi": "3.0.1",
   "info": {
-    "title": "Order Service API",
-    "version": "0.1.0",
-    "description": "Order details and customer order lookup endpoints."
+    "title": "Ecommerce API",
+    "version": "1.0.0",
+    "description": "API for customers, products, orders, and project estimation"
   },
   "servers": [
     {
@@ -20,10 +20,44 @@
     "/health": {
       "get": {
         "operationId": "getHealth",
-        "summary": "Get service health",
+        "summary": "Health check",
         "responses": {
           "200": {
-            "description": "Service health"
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers": {
+      "get": {
+        "operationId": "getCustomers",
+        "summary": "List all customers",
+        "responses": {
+          "200": {
+            "description": "Array of customers",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "type": "object" } } } }
+          }
+        }
+      }
+    },
+    "/products": {
+      "get": {
+        "operationId": "getProducts",
+        "summary": "List all products",
+        "responses": {
+          "200": {
+            "description": "Array of products",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "type": "object" } } } }
           }
         }
       }
@@ -31,20 +65,15 @@
     "/orders": {
       "get": {
         "operationId": "getOrders",
-        "summary": "Get all orders",
+        "summary": "List orders, optionally filtered",
+        "parameters": [
+          { "name": "customer_id", "in": "query", "schema": { "type": "integer" } },
+          { "name": "order_id", "in": "query", "schema": { "type": "integer" } }
+        ],
         "responses": {
           "200": {
-            "description": "Order collection",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Order"
-                  }
-                }
-              }
-            }
+            "description": "Array of orders",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "type": "object" } } } }
           }
         }
       }
@@ -52,98 +81,37 @@
     "/orders/{order_id}": {
       "get": {
         "operationId": "getOrderById",
-        "summary": "Get an order by identifier",
+        "summary": "Get order by ID",
         "parameters": [
-          {
-            "name": "order_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "example": "order-1001"
-            }
-          }
+          { "name": "order_id", "in": "path", "required": true, "schema": { "type": "integer" } }
         ],
         "responses": {
-          "200": {
-            "description": "Order details",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Order"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Order not found"
-          }
+          "200": { "description": "Order object", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "404": { "description": "Order not found" }
         }
       }
     },
     "/customers/{customer_id}/orders": {
       "get": {
         "operationId": "getCustomerOrders",
-        "summary": "Get all orders for a customer",
+        "summary": "Get orders for a customer",
         "parameters": [
-          {
-            "name": "customer_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "example": "cust-001"
-            }
-          }
+          { "name": "customer_id", "in": "path", "required": true, "schema": { "type": "integer" } }
         ],
         "responses": {
-          "200": {
-            "description": "Customer order collection",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Order"
-                  }
-                }
-              }
-            }
-          }
+          "200": { "description": "Array of orders", "content": { "application/json": { "schema": { "type": "array", "items": { "type": "object" } } } } }
         }
       }
-    }
-  },
-  "components": {
-    "schemas": {
-      "Order": {
-        "type": "object",
-        "required": ["orderId", "customerId", "status", "total", "items"],
-        "properties": {
-          "orderId": {
-            "type": "string",
-            "example": "order-1001"
-          },
-          "customerId": {
-            "type": "string",
-            "example": "cust-001"
-          },
-          "status": {
-            "type": "string",
-            "example": "shipped"
-          },
-          "total": {
-            "type": "number",
-            "format": "double",
-            "example": 129.99
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "example": ["wireless keyboard", "mouse"]
-          }
+    },
+    "/project-estimation/{estimation_id}": {
+      "get": {
+        "operationId": "getProjectEstimation",
+        "summary": "Get project estimation by ID",
+        "parameters": [
+          { "name": "estimation_id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Estimation result", "content": { "application/json": { "schema": { "type": "object" } } } }
         }
       }
     }

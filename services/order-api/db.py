@@ -10,6 +10,8 @@ def get_db_connection():
         f"Driver={{{os.getenv('DB_DRIVER')}}};"
         f"Server={os.getenv('DB_SERVER')};"
         f"Database={os.getenv('DB_NAME')};"
+        f"TrustServerCertificate={os.getenv('TRUST_SERVER_CERTIFICATE')};"
+        "Encrypt=yes;"
     )
     if os.getenv("DB_TRUSTED_CONNECTION", "no").lower() == "yes":
         conn_str += "Trusted_Connection=yes;"

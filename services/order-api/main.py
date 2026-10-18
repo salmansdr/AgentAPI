@@ -1,7 +1,9 @@
 from fastapi import FastAPI, HTTPException
-import customer_service, product_service, order_service,project_estimation
+import customer_service, product_service, order_service,project_estimation,reconciliation
 
 app = FastAPI(title="Ecommerce API", version="1.0.0")
+
+
 
 @app.get("/health")
 def health():
@@ -33,4 +35,11 @@ def get_customer_orders(customer_id: int):
 @app.get("/project-estimation/{estimation_id}")
 def estimation(estimation_id: str):
     return project_estimation.get_estimation(estimation_id)
+
+@app.get("/reconcile")
+def reconcile():
+    result = reconciliation.reconcile()   # call your reconciliation function
+    print(result["ai_explanation"])
+    return result["ai_explanation"]                        # still return JSON response to API caller
+
 

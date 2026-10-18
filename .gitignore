@@ -1,3 +1,4 @@
 services/customer-function/local.settings.json
+**/.env
 **/__pycache__/
 *.py[cod]

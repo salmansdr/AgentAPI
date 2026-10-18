@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-
+#this for database connection
 def get_db_connection():
     import pyodbc  # lazy: app must start without ODBC libs when USE_DATABASE=False
     conn_str = (
